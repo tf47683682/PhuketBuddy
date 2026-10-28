@@ -2,6 +2,8 @@
 
 PhuketAI（`ai.pukitcore.com`）的桌面气泡助手：**余额优先**常驻桌面，点开即可查看用量与 API Key。
 
+> **下载**：[Releases v0.1.0](https://github.com/tf47683682/PhuketBuddy/releases/tag/v0.1.0) —— `PhuketBuddy-v0.1.0-win64.zip`（解压即用）或直接下载单文件 `PhuketBuddy.exe`。
+
 - 体积：单文件 **3.9 MB**，不依赖 .NET/VC 运行时（仅需系统自带 WebView2）
 - 形态：**82px 圆形气泡**，显示「余额 + 今日已消费」；拖到哪就贴到最近的屏幕边，**平时半隐藏在边缘，鼠标移上去自动滑出**
 - 外观：**深色 / 亮色**两套主题，设置里切换，气泡与面板同步
