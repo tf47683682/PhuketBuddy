@@ -1,0 +1,16 @@
+# Rust / Tauri 构建产物
+src-tauri/target/
+target/
+# 运行期数据（含登录令牌，绝不能提交）
+data/
+release/data/
+src-tauri/target/release/data/
+*.bin
+# 打包产物
+*.zip
+PhuketBuddy.exe
+release/PhuketBuddy.exe
+preview/
+# 临时文件
+.tmp/
+*.log

@@ -1,0 +1,6 @@
+{
+  "identifier": "default",
+  "description": "PhuketBuddy 默认权限",
+  "windows": ["bubble", "panel"],
+  "permissions": ["core:default"]
+}

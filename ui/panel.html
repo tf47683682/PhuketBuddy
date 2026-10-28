@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>PhuketBuddy</title>
+<style>
+  :root{
+    --teal:#18A7A0; --teal-hi:#2FD4C8; --teal-dim:#0F7C77;
+    --panel:rgba(18,24,31,.88); --panel-2:rgba(28,36,45,.75);
+    --line:rgba(255,255,255,.09); --line-2:rgba(255,255,255,.06);
+    --txt:#E8EFF5; --muted:#93A3B1; --dim:#6B7B8A;
+    --ok:#34D399; --warn:#F5A524; --bad:#F05A5A;
+    --card-bg:rgba(17,23,30,.97);
+    --card-shadow:0 1px 3px rgba(0,0,0,.45);
+    --card-top:rgba(255,255,255,.28);
+    --stat-bg:rgba(14,19,25,.55);
+    --foot-bg:rgba(10,15,20,.35);
+    --input-bg:rgba(0,0,0,.28);
+    --btn-bg:rgba(255,255,255,.04);
+    --btn-bg-hover:rgba(255,255,255,.1);
+    --keyico-bg:rgba(24,167,160,.14); --keyico-fg:#6FE0D8;
+    --badge-bg:rgba(24,167,160,.12); --badge-fg:#8FE3DD;
+    --font:"Segoe UI Variable Display","Segoe UI","Microsoft YaHei UI","Microsoft YaHei",sans-serif;
+  }
+  body.light{
+    --panel:rgba(255,255,255,.98);
+    --line:rgba(15,23,42,.12); --line-2:rgba(15,23,42,.07);
+    --txt:#0F172A; --muted:#475569; --dim:#64748B;
+    --card-bg:#FFFFFF;
+    --card-shadow:0 1px 3px rgba(15,23,42,.18);
+    --card-top:rgba(24,167,160,.35);
+    --stat-bg:#F7FAFB;
+    --foot-bg:#F1F5F6;
+    --input-bg:#F4F7F9;
+    --btn-bg:#F4F7F9;
+    --btn-bg-hover:#E8EFF1;
+    --keyico-bg:rgba(24,167,160,.12); --keyico-fg:#0F7C77;
+    --badge-bg:rgba(24,167,160,.10); --badge-fg:#0F7C77;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:348px;background:transparent;overflow:hidden;font-family:var(--font);color:var(--txt);
+    -webkit-user-select:none;user-select:none}
+  body::-webkit-scrollbar{display:none}
+
+  .wrap{padding:8px}
+  .card{
+    width:330px;border-radius:20px;background:var(--card-bg);
+    border:1px solid var(--line);
+    box-shadow:var(--card-shadow);
+    overflow:hidden;position:relative;
+  }
+  .card::before{content:"";position:absolute;inset:0 0 auto 0;height:1px;
+    background:linear-gradient(90deg,transparent,var(--card-top),transparent)}
+
+  /* ---------- 头部 ---------- */
+  .head{display:flex;align-items:center;gap:10px;padding:13px 14px 11px}
+  .brand{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:none;
+    background:linear-gradient(150deg,#233037,#151C22);border:1px solid var(--line)}
+  .brand svg{width:19px;height:18px}
+  .titles{flex:1;min-width:0}
+  .titles h1{font-size:13px;font-weight:650;letter-spacing:.2px}
+  .titles p{margin-top:2px;font-size:10.5px;color:var(--dim);display:flex;align-items:center;gap:5px}
+  .dot{width:5px;height:5px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok);flex:none}
+  .dot.warn{background:var(--warn);box-shadow:0 0 8px var(--warn)}
+  .dot.off{background:var(--dim);box-shadow:none}
+  .icon-btn{width:26px;height:26px;border-radius:8px;border:1px solid transparent;
+    background:var(--btn-bg);color:var(--muted);display:grid;place-items:center;
+    cursor:pointer;transition:.15s;flex:none}
+  .icon-btn:hover{background:var(--btn-bg-hover);color:var(--txt)}
+  .icon-btn svg{width:14px;height:14px}
+
+  /* ---------- 余额 ---------- */
+  .balance{padding:2px 14px 13px;display:flex;align-items:flex-end;justify-content:space-between;gap:8px}
+  .big{font-size:31px;font-weight:700;letter-spacing:-1px;line-height:1;
+    font-variant-numeric:tabular-nums;
+    background:linear-gradient(180deg,#fff,#BFEFEA);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .big small{font-size:12px;font-weight:600;letter-spacing:0;-webkit-text-fill-color:var(--muted);margin-left:4px}
+  .sub{font-size:10.5px;color:var(--dim);margin-top:6px}
+  .sub b{color:var(--teal-hi);font-weight:600}
+  .badge{font-size:10px;padding:4px 8px;border-radius:999px;border:1px solid var(--line);
+    background:var(--badge-bg);color:var(--badge-fg);white-space:nowrap;flex:none}
+  .badge.warn{background:rgba(245,165,36,.14);color:#FFD79A;border-color:rgba(245,165,36,.3)}
+  .topup{font-size:10px;padding:4px 10px;border-radius:999px;border:1px solid rgba(47,212,200,.35);
+    background:linear-gradient(180deg,rgba(24,167,160,.95),rgba(13,104,100,.95));color:#EAFBF9;
+    white-space:nowrap;flex:none;cursor:pointer;box-shadow:0 3px 10px rgba(24,167,160,.28);transition:.15s}
+  .topup:hover{filter:brightness(1.12)}
+
+  /* ---------- 指标 ---------- */
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line-2);
+    border-top:1px solid var(--line-2);border-bottom:1px solid var(--line-2)}
+  .stat{background:var(--stat-bg);padding:10px 14px}
+  .stat .k{font-size:10px;color:var(--dim)}
+  .stat .v{font-size:15px;font-weight:650;margin-top:4px;font-variant-numeric:tabular-nums}
+  .stat .v em{font-size:10px;font-style:normal;color:var(--dim);font-weight:500;margin-left:3px}
+
+  /* ---------- 图表 ---------- */
+  .chart{padding:12px 14px 4px}
+  .chart .row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .chart .row span{font-size:10.5px;color:var(--muted);font-weight:600;letter-spacing:.3px}
+  .chart .row i{font-size:10px;color:var(--dim);font-style:normal}
+  .bars{display:flex;align-items:flex-end;gap:5px;height:44px}
+  .bars .b{flex:1;border-radius:4px 4px 2px 2px;min-height:3px;
+    background:linear-gradient(180deg,rgba(47,212,200,.85),rgba(24,167,160,.22))}
+  .bars .b.today{background:linear-gradient(180deg,#7FF0E7,#18A7A0);box-shadow:0 0 12px rgba(47,212,200,.45)}
+  .xaxis{display:flex;gap:5px;margin-top:6px}
+  .xaxis span{flex:1;text-align:center;font-size:9px;color:var(--dim)}
+
+  /* ---------- Key 列表 ---------- */
+  .keys{padding:6px 14px 2px}
+  .keys .hd{display:flex;align-items:center;justify-content:space-between;padding:6px 0}
+  .keys .hd span{font-size:10.5px;font-weight:600;color:var(--muted);letter-spacing:.3px}
+  .keys .hd a{font-size:10px;color:var(--teal-hi);text-decoration:none;cursor:pointer;opacity:.9}
+  .keys .hd a:hover{opacity:1;text-decoration:underline}
+  .key{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:10px;
+    transition:.15s;cursor:pointer;position:relative}
+  .key:hover{background:rgba(255,255,255,.06)}
+  .key .ico{width:22px;height:22px;border-radius:6px;background:var(--keyico-bg);
+    color:var(--keyico-fg);display:grid;place-items:center;flex:none;font-size:10px;font-weight:700}
+  .key .mid{flex:1;min-width:0}
+  .key .nm{font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .key .mk{font-size:10px;color:var(--dim);font-family:Consolas,monospace;margin-top:2px}
+  .key .qty{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums;flex:none}
+  .key .st{width:6px;height:6px;border-radius:50%;flex:none;background:var(--ok);box-shadow:0 0 8px var(--ok)}
+  .key .st.off{background:var(--dim);box-shadow:none}
+  .key .copy{font-size:9px;color:var(--teal-hi);opacity:0;transition:.15s;flex:none}
+  .key:hover .copy{opacity:1}
+  .empty{padding:10px 8px 14px;font-size:11px;color:var(--dim);text-align:center}
+
+  /* ---------- DeepSeek ---------- */
+  .ds{padding:10px 14px 12px;border-top:1px solid var(--line-2)}
+  .ds-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
+  .ds-hd .t{font-size:10.5px;font-weight:600;color:var(--muted);letter-spacing:.3px}
+  .ds-badge{font-size:9.5px;padding:2px 7px;border-radius:999px;background:var(--badge-bg);color:var(--badge-fg)}
+  .ds-badge.off{background:rgba(240,90,90,.14);color:#B42318}
+  .ds-main{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+  .ds-bal{font-size:20px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--txt)}
+  .ds-bal small{font-size:10px;color:var(--dim);margin-left:4px;font-weight:500}
+  .ds-split{font-size:10px;color:var(--dim);text-align:right;line-height:1.5}
+  .ds-foot{display:flex;align-items:center;gap:12px;margin-top:8px;font-size:10px;color:var(--dim)}
+  .ds-foot a{color:var(--teal-hi);cursor:pointer;text-decoration:none}
+  .ds-foot a:hover{text-decoration:underline}
+  .ds-foot .sp{flex:1}
+  .ds-empty{font-size:11px;color:var(--dim);display:flex;align-items:center;gap:8px}
+  .ds-empty a{color:var(--teal-hi);cursor:pointer;text-decoration:none}
+
+  .ds-hd-right{display:flex;align-items:center;gap:6px}
+  .ds-hd .chev{font-size:9px;color:var(--dim);transition:transform .15s ease;display:inline-block}
+  .ds.collapsed .ds-hd .chev{transform:rotate(-90deg)}
+  .ds.collapsed #dsBody{display:none}
+  .ds-hd{cursor:pointer;user-select:none}
+
+  /* ---------- 底栏 ---------- */
+  .foot{margin-top:6px;padding:9px 10px;border-top:1px solid var(--line-2);
+    display:flex;align-items:center;gap:6px;background:var(--foot-bg)}
+  .foot .refresh{font-size:9.5px;color:var(--dim);flex:1;padding-left:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fbtn{border:1px solid var(--line);background:var(--btn-bg);color:var(--muted);
+    border-radius:9px;padding:6px 10px;font:inherit;font-size:10.5px;cursor:pointer;
+    transition:.15s;display:flex;align-items:center;gap:5px;white-space:nowrap}
+  .fbtn:hover{background:var(--btn-bg-hover);color:var(--txt)}
+  .fbtn.primary{background:linear-gradient(180deg,rgba(24,167,160,.95),rgba(13,104,100,.95));
+    border-color:rgba(47,212,200,.35);color:#EAFBF9;box-shadow:0 4px 14px rgba(24,167,160,.3)}
+  .fbtn.primary:hover{filter:brightness(1.1)}
+  .fbtn svg{width:12px;height:12px}
+
+  /* ---------- 登录 ---------- */
+  .login{padding:8px 20px 20px;text-align:center}
+  .login .logo{width:52px;height:52px;margin:2px auto 12px;border-radius:16px;display:grid;place-items:center;
+    background:radial-gradient(circle at 30% 20%,rgba(47,212,200,.32),rgba(10,20,25,.9));
+    border:1px solid rgba(255,255,255,.12);box-shadow:0 10px 28px rgba(24,167,160,.25)}
+  .login .logo svg{width:30px;height:28px}
+  .login h2{font-size:15px;font-weight:650}
+  .login p.intro{margin:5px 0 14px;font-size:11px;color:var(--dim);line-height:1.5}
+  .field{text-align:left;margin-bottom:9px}
+  .field label{display:block;font-size:10px;color:var(--muted);margin-bottom:5px;letter-spacing:.3px}
+  .field input{width:100%;height:34px;border-radius:9px;border:1px solid var(--line);
+    background:var(--input-bg);color:var(--txt);padding:0 11px;font:inherit;font-size:12px;
+    outline:none;transition:.15s}
+  .field input:focus{border-color:rgba(47,212,200,.55);box-shadow:0 0 0 3px rgba(24,167,160,.15)}
+  .field input::placeholder{color:#5C6B78}
+  .note{font-size:9.5px;color:var(--dim);line-height:1.6;margin:9px 2px 12px;text-align:left}
+  .note b{color:var(--muted);font-weight:600}
+  .err{font-size:10.5px;color:#FFB4B4;background:rgba(240,90,90,.1);border:1px solid rgba(240,90,90,.25);
+    border-radius:8px;padding:7px 9px;margin-bottom:10px;text-align:left;display:none}
+  .err.show{display:block}
+  .link{font-size:10px;color:var(--dim);margin-top:10px}
+  .link a{color:var(--teal-hi);text-decoration:none;cursor:pointer}
+
+  /* ---------- 设置 ---------- */
+  .settings{padding:6px 16px 16px;display:none}
+  .settings.show{display:block}
+  .srow{display:flex;align-items:center;justify-content:space-between;padding:9px 0;
+    border-bottom:1px solid var(--line-2);gap:10px}
+  .srow .lab{font-size:11.5px;color:var(--txt)}
+  .srow .hint{font-size:9.5px;color:var(--dim);margin-top:2px}
+  .srow select,.srow input[type=number]{background:var(--input-bg);border:1px solid var(--line);
+    color:var(--txt);border-radius:7px;padding:4px 6px;font:inherit;font-size:11px;outline:none;width:78px;text-align:right}
+  .switch{width:36px;height:20px;border-radius:999px;background:rgba(127,127,127,.35);
+    position:relative;cursor:pointer;transition:.18s;flex:none}
+  .switch.on{background:rgba(24,167,160,.85)}
+  .switch::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;
+    background:#fff;transition:.18s}
+  .switch.on::after{left:18px}
+
+  /* ---------- Toast ---------- */
+  .toast{position:fixed;left:50%;bottom:16px;transform:translate(-50%,8px);
+    background:var(--card-bg);border:1px solid var(--line);color:var(--txt);
+    font-size:11px;padding:7px 13px;border-radius:9px;opacity:0;pointer-events:none;
+    transition:.22s;white-space:nowrap;box-shadow:0 10px 28px rgba(0,0,0,.5);z-index:9}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  .hidden{display:none !important}
+
+  /* ---------- 亮色主题微调 ---------- */
+  body.light .big{background:none;color:var(--txt);-webkit-text-fill-color:var(--txt)}
+  body.light .badge.warn{background:rgba(245,165,36,.16);color:#B45309;border-color:rgba(245,165,36,.35)}
+  body.light .err{background:#FEF3F2;border-color:rgba(240,90,90,.3);color:#B42318}
+  body.light .topup{box-shadow:0 2px 6px rgba(24,167,160,.25)}
+  body.light .toast{box-shadow:0 6px 18px rgba(15,23,42,.18)}
+  body.light .bars .b{background:linear-gradient(180deg,#5FD3CB,#149B94)}
+  body.light .bars .b.today{background:linear-gradient(180deg,#18A7A0,#0B6F6A)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="head">
+      <div class="brand">
+        <svg viewBox="0 0 421 386"><path fill="#E8EFF5" d="M290 61 L114 77 L96 317 L183 296 L190 160 L297 107 Z M152 102 L246 92 L166 143 Z"/><path fill="#18A7A0" d="M289 117 L266 126 L266 180 L211 196 L212 236 L263 228 L248 294 L329 287 Z"/></svg>
+      </div>
+      <div class="titles">
+        <h1>PhuketBuddy</h1>
+        <p><i class="dot" id="statusDot"></i><span id="statusText">正在同步…</span></p>
+      </div>
+      <button class="icon-btn" id="btnSettings" title="设置">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </button>
+    </div>
+
+    <!-- 登录 -->
+    <section class="login" id="viewLogin">
+      <div class="logo">
+        <svg viewBox="0 0 421 386"><path fill="#E8EFF5" d="M290 61 L114 77 L96 317 L183 296 L190 160 L297 107 Z M152 102 L246 92 L166 143 Z"/><path fill="#18A7A0" d="M289 117 L266 126 L266 180 L211 196 L212 236 L263 228 L248 294 L329 287 Z"/></svg>
+      </div>
+      <h2>登录 PhuketAI</h2>
+      <p class="intro">登录后即可在桌面查看余额与用量</p>
+      <div class="err" id="loginErr"></div>
+      <div class="agreelink" id="agreeHint" style="display:none;margin:-4px 0 10px;text-align:left">
+        <a id="agreeOpen" style="color:#7FF0E7;font-size:10.5px;cursor:pointer;text-decoration:underline">站点可能更新了服务条款 → 打开网页接受后再登录</a>
+      </div>
+      <div class="field"><label>邮箱</label><input id="email" type="email" placeholder="you@example.com" autocomplete="username" /></div>
+      <div class="field"><label>密码</label><input id="password" type="password" placeholder="••••••••" autocomplete="current-password" /></div>
+      <button class="fbtn primary" id="btnLogin" style="width:100%;justify-content:center;padding:9px">登录并开始同步</button>
+      <div class="note">凭据使用 Windows DPAPI 加密后仅存本机，不会上传任何地方。</div>
+      <div class="link">还没有账号？<a id="linkRegister">去站点注册</a></div>
+    </section>
+
+    <!-- 仪表盘 -->
+    <section id="viewDash">
+      <div class="balance">
+        <div>
+          <div class="big"><span id="balanceNum">—</span><small>credits</small></div>
+          <div class="sub" id="balanceSub">≈ ¥0.00</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <div class="badge" id="balanceBadge">余额健康</div>
+          <button class="topup" id="btnTopup">充值</button>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="k">今日消耗</div><div class="v" id="sToday">—</div></div>
+        <div class="stat"><div class="k">今日请求</div><div class="v" id="sReq">—</div></div>
+        <div class="stat"><div class="k">累计消耗</div><div class="v" id="sTotal">—</div></div>
+        <div class="stat"><div class="k">API Keys</div><div class="v" id="sKeys">—</div></div>
+      </div>
+
+      <div class="chart">
+        <div class="row"><span>近 7 日消耗</span><i id="chartTotal">—</i></div>
+        <div class="bars" id="bars"></div>
+        <div class="xaxis" id="xaxis"></div>
+      </div>
+
+      <div class="keys">
+        <div class="hd"><span id="keyCount">API KEYS</span>
+          <span><a id="linkManage">管理 API Key</a></span>
+        </div>
+        <div id="keyList"></div>
+      </div>
+
+      <!-- DeepSeek -->
+      <div class="ds" id="dsCard">
+        <div class="ds-hd" id="dsHd">
+          <span class="t">DEEPSEEK</span>
+          <span class="ds-hd-right">
+            <span class="ds-badge" id="dsBadge" style="display:none">可用</span>
+            <span class="chev" id="dsChev">▾</span>
+          </span>
+        </div>
+        <div id="dsBody">
+          <div class="ds-empty" id="dsEmpty">未绑定 DeepSeek API Key · <a id="dsBind">去绑定</a></div>
+          <div id="dsInfo" style="display:none">
+            <div class="ds-main">
+              <div class="ds-bal"><span id="dsTotal">—</span><small id="dsCur">CNY</small></div>
+              <div class="ds-split" id="dsSplit"></div>
+            </div>
+            <div class="ds-foot">
+              <span id="dsTime"></span>
+              <span class="sp"></span>
+              <a id="dsUsage">查看用量</a>
+              <a id="dsRefresh">刷新</a>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="foot">
+        <span class="refresh" id="footHint">自动刷新 · 5 分钟</span>
+        <button class="fbtn" id="btnRefresh">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg>
+          刷新
+        </button>
+        <button class="fbtn primary" id="btnSite">打开网站</button>
+      </div>
+    </section>
+
+    <!-- 设置 -->
+    <section class="settings" id="viewSettings">
+      <div class="srow">
+        <div><div class="lab">外观</div><div class="hint">深色 / 亮色主题</div></div>
+        <select id="setTheme">
+          <option value="dark">深色</option>
+          <option value="light">亮色</option>
+        </select>
+      </div>
+      <div class="srow">
+        <div><div class="lab">自动刷新</div><div class="hint">气泡余额的更新间隔</div></div>
+        <select id="setRefresh">
+          <option value="3">3 分钟</option><option value="5">5 分钟</option>
+          <option value="10">10 分钟</option><option value="30">30 分钟</option>
+        </select>
+      </div>
+      <div class="srow">
+        <div><div class="lab">开机自启</div><div class="hint">随 Windows 一起启动</div></div>
+        <div class="switch" id="setAutostart"></div>
+      </div>
+      <div class="srow">
+        <div><div class="lab">启动时隐藏气泡</div><div class="hint">只驻留托盘，点托盘图标再显示</div></div>
+        <div class="switch" id="setStartHidden"></div>
+      </div>
+      <div class="srow" id="restrictRow" style="display:none">
+        <div><div class="lab" style="color:var(--warn)">受限权限运行</div>
+          <div class="hint">开不了机自启。请从资源管理器直接双击 exe 启动</div></div>
+      </div>
+      <div class="srow">
+        <div><div class="lab">低余额提醒</div><div class="hint">低于该值时气泡变琥珀</div></div>
+        <input type="number" id="setThreshold" min="0" step="0.5" />
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="fbtn primary" id="btnSaveSettings" style="flex:1;justify-content:center">保存设置</button>
+        <button class="fbtn" id="btnLogout">退出登录</button>
+      </div>
+      <div class="srow" style="margin-top:10px">
+        <div><div class="lab">DeepSeek API Key</div><div class="hint" id="dsKeyHint">用于读取 DeepSeek 余额</div></div>
+        <button class="fbtn" id="btnDsClear" style="flex:none;padding:5px 8px">解绑</button>
+      </div>
+      <div style="display:flex;gap:8px;margin:-2px 0 10px">
+        <input id="dsKey" type="password" placeholder="sk-..." style="flex:1;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--input-bg);color:var(--txt);padding:0 10px;font:inherit;font-size:11px;outline:none" />
+        <button class="fbtn" id="btnDsSave" style="flex:none">绑定</button>
+      </div>
+      <div class="srow" style="margin-top:10px">
+        <div><div class="lab">数据目录</div><div class="hint" id="dataPath" style="word-break:break-all">—</div></div>
+        <button class="fbtn" id="btnOpenData" style="flex:none;padding:5px 8px">打开</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="fbtn" id="btnBackground" style="flex:1;justify-content:center">转入后台</button>
+        <button class="fbtn" id="btnQuit" style="flex:1;justify-content:center;color:#FFB4B4;border-color:rgba(240,90,90,.3)">退出 PhuketBuddy</button>
+      </div>
+      <div style="font-size:9px;color:var(--dim);margin-top:6px;line-height:1.5">
+        转入后台后不显示气泡，单击托盘图标可随时恢复；定时刷新继续运行。
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:9.5px;color:var(--dim)">
+        <span>PhuketBuddy <span id="ver">0.1.0</span></span>
+        <span><a id="linkService" style="color:var(--dim);cursor:pointer;text-decoration:none">服务条款</a></span>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const TAURI = window.__TAURI__;
+  const invoke = (c, a) => TAURI.core.invoke(c, a);
+  const listen = (e, cb) => TAURI.event.listen(e, cb);
+
+  const $ = (id) => document.getElementById(id);
+  const SITE = 'https://ai.pukitcore.com';
+
+  let state = { loggedIn:false, settings:{ refresh_minutes:5, autostart:false, alert_threshold:1.0, theme:'dark', start_hidden:false }, data:null, view:'login' };
+  let dsState = { configured: false, tail: '', data: null };
+  let restricted = false;
+
+  /* ---------- DeepSeek ---------- */
+  function moneySym(cur){ return cur === 'CNY' ? '¥' : (cur === 'USD' ? '$' : ''); }
+  function renderDs(){
+    const has = !!dsState.configured;
+    $('dsEmpty').style.display = has ? 'none' : 'flex';
+    $('dsInfo').style.display = has ? 'block' : 'none';
+    $('dsBadge').style.display = has ? 'inline-block' : 'none';
+    $('dsKeyHint').textContent = has ? ('已绑定 ' + (dsState.tail || '****')) : '用于读取 DeepSeek 余额';
+    if (!has) return;
+
+    const d = dsState.data || {};
+    const cur = d.currency || 'CNY';
+    const sym = moneySym(cur);
+    $('dsTotal').textContent = (typeof d.total === 'number') ? sym + d.total.toFixed(2) : '—';
+    $('dsCur').textContent = cur;
+    const parts = [];
+    if (typeof d.toppedUp === 'number') parts.push('充值 ' + sym + d.toppedUp.toFixed(2));
+    if (typeof d.granted === 'number') parts.push('赠送 ' + sym + d.granted.toFixed(2));
+    $('dsSplit').innerHTML = parts.join('<br/>');
+    $('dsBadge').textContent = d.available === false ? '不可用' : '可用';
+    $('dsBadge').classList.toggle('off', d.available === false);
+    $('dsTime').textContent = d.updatedAt
+      ? ('更新 ' + new Date(d.updatedAt * 1000).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }))
+      : '';
+
+  }
+
+  async function loadDs(){
+    try {
+      const s = await invoke('ds_status');
+      if (s) dsState = s;
+      renderDs();
+      syncHeight();
+    } catch (e) { /* ignore */ }
+  }
+
+  /* ---------- 工具 ---------- */
+  function fmtNum(n, digits){
+    if (n === null || n === undefined || isNaN(n)) return '—';
+    const v = Number(n);
+    if (Math.abs(v) >= 10000) return (v/1000).toFixed(1) + 'k';
+    return v.toFixed(digits === undefined ? 2 : digits);
+  }
+  function fmtInt(n){
+    if (n === null || n === undefined || isNaN(n)) return '—';
+    return Math.round(Number(n)).toLocaleString('zh-CN');
+  }
+  function toast(msg){
+    const t = $('toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('show'), 1600);
+  }
+  function openInApp(path){
+    invoke('open_site_window', { path: path || '' })
+      .catch(err => toast('打开失败：' + String(err)));
+  }
+  async function copyText(text){    try { await navigator.clipboard.writeText(text); return true; }
+    catch(e){
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta); return ok;
+      } catch(_) { return false; }
+    }
+  }
+  async function syncHeight(){
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const card = document.querySelector('.card').getBoundingClientRect().height;
+    const h = Math.ceil(card) + 16;
+    try { await invoke('panel_resize', { height: h }); } catch(e) { /* ignore */ }
+  }
+
+  /* ---------- 视图 ---------- */
+  function showView(v){
+    state.view = v;
+    $('viewLogin').classList.toggle('hidden', v !== 'login');
+    $('viewDash').classList.toggle('hidden', v !== 'dash');
+    $('viewSettings').classList.toggle('show', v === 'settings');
+    if (v === 'settings') renderSettings();
+    syncHeight();
+  }
+
+  function setStatus(text, kind){
+    $('statusText').textContent = text;
+    const dot = $('statusDot');
+    dot.className = 'dot' + (kind === 'warn' ? ' warn' : kind === 'off' ? ' off' : '');
+  }
+
+  /* ---------- 渲染 ---------- */
+  function renderDash(d){
+    state.data = d;
+    state.lastSync = Date.now();
+    const bal = (d && typeof d.balance === 'number') ? d.balance
+              : (d && d.user && typeof d.user.balance === 'number') ? d.user.balance : null;
+    const stats = (d && d.stats) || {};
+    const trend = (d && Array.isArray(d.trend)) ? d.trend : [];
+    const keys = (d && Array.isArray(d.keys)) ? d.keys : [];
+
+    $('balanceNum').textContent = fmtNum(bal, 2);
+    const avg = trend.length ? trend.reduce((a,x) => a + (Number(x.cost)||0), 0) / trend.length : 0;
+    const days = (bal !== null && avg > 0) ? Math.floor(bal / avg) : null;
+    $('balanceSub').innerHTML = '≈ ¥' + fmtNum(bal, 2)
+      + (days !== null ? ' · 预计可用 <b>' + (days < 1 ? '不足 1' : days) + '</b> 天' : '');
+
+    const th = Number(state.settings.alert_threshold || 0);
+    const low = (bal !== null && th > 0 && bal < th) || (days !== null && days < 1);
+    const badge = $('balanceBadge');
+    badge.textContent = low ? '余额偏低' : '余额健康';
+    badge.className = 'badge' + (low ? ' warn' : '');
+
+    $('sToday').innerHTML = '¥' + fmtNum(stats.todayCost, 2);
+    $('sReq').innerHTML = fmtInt(stats.todayRequests) + '<em>次</em>';
+    $('sTotal').innerHTML = '¥' + fmtNum(stats.totalCost, 2);
+    $('sKeys').innerHTML = fmtInt(keys.length || stats.keyCount || 0) + '<em>个</em>';
+
+    // 固定 7 天坐标轴（缺数据补 0，保证和站点口径一致）
+    const bars = $('bars'), xaxis = $('xaxis');
+    bars.innerHTML = ''; xaxis.innerHTML = '';
+    const pad2 = n => (n < 10 ? '0' : '') + n;
+    const fmtLocalDate = dt => dt.getFullYear() + '-' + pad2(dt.getMonth() + 1) + '-' + pad2(dt.getDate());
+    const dayList = [];
+    const fromDate = (d.range && d.range.from) ? d.range.from : '';
+    if (fromDate) {
+      const startTs = new Date(fromDate + 'T00:00:00').getTime();
+      for (let i = 0; i < 7; i++) {
+        dayList.push(fmtLocalDate(new Date(startTs + i * 86400000)));
+      }
+    } else {
+      trend.slice(-7).forEach(p => dayList.push(String(p.date || '').slice(0, 10)));
+    }
+    const byDate = new Map();
+    trend.forEach(p => byDate.set(String(p.date || '').slice(0, 10), p));
+    const vals = dayList.map(ds => {
+      const pt = byDate.get(ds);
+      return { date: ds, cost: pt ? (Number(pt.cost) || 0) : 0 };
+    });
+    const max = Math.max(...vals.map(v => v.cost), 0.01);
+    vals.forEach((v, idx) => {
+      const el = document.createElement('div');
+      el.className = 'b' + (idx === vals.length - 1 ? ' today' : '');
+      el.style.height = Math.max(4, Math.round(v.cost / max * 44)) + 'px';
+      el.title = v.date + ' · ¥' + fmtNum(v.cost, 2);
+      bars.appendChild(el);
+      const sx = document.createElement('span');
+      sx.textContent = v.date ? v.date.slice(5) : '';
+      xaxis.appendChild(sx);
+    });
+    const sum = vals.reduce((a, v) => a + v.cost, 0);
+    $('chartTotal').textContent = '¥ ' + fmtNum(sum, 2);
+
+    // Keys
+    $('keyCount').textContent = 'API KEYS · ' + keys.length;
+    const list = $('keyList');
+    list.innerHTML = '';
+    if (!keys.length){
+      list.innerHTML = '<div class="empty">暂无 API Key</div>';
+    }
+    keys.slice(0, 6).forEach((k, i) => {
+      const row = document.createElement('div');
+      row.className = 'key';
+      row.innerHTML = '<div class="ico">K' + (i+1) + '</div>'
+        + '<div class="mid"><div class="nm"></div><div class="mk"></div></div>'
+        + '<div class="qty"></div>'
+        + '<div class="st' + (k.enabled ? '' : ' off') + '"></div>'
+        + '<div class="copy">复制</div>';
+      row.querySelector('.nm').textContent = k.name || '未命名';
+      row.querySelector('.mk').textContent = k.masked || '—';
+      row.querySelector('.qty').textContent = (typeof k.quota === 'number' && k.quota > 0)
+        ? '¥' + fmtNum(k.quota, 2) : '';
+      row.title = '点击复制完整 Key';
+      row.addEventListener('click', async () => {
+        if (!k.key) { toast('该 Key 未返回明文'); return; }
+        const ok = await copyText(k.key);
+        toast(ok ? '已复制 ' + (k.name || 'Key') : '复制失败');
+      });
+      list.appendChild(row);
+    });
+
+    if (d.syncedAt){
+      const t = new Date(d.syncedAt * 1000);
+      setStatus('ai.pukitcore.com · ' + t.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'}) + ' 同步', 'ok');
+    }
+    $('footHint').textContent = '自动刷新 · ' + (state.settings.refresh_minutes || 5) + ' 分钟';
+    showView('dash');
+  }
+
+  function applyTheme(theme){
+    state.settings.theme = theme === 'light' ? 'light' : 'dark';
+    document.body.classList.toggle('light', state.settings.theme === 'light');
+  }
+
+  function renderSettings(){
+    $('setTheme').value = state.settings.theme || 'dark';
+    $('setRefresh').value = String(state.settings.refresh_minutes || 5);
+    $('setThreshold').value = state.settings.alert_threshold != null ? state.settings.alert_threshold : 1;
+    $('setAutostart').classList.toggle('on', !!state.settings.autostart);
+    $('setStartHidden').classList.toggle('on', !!state.settings.start_hidden);
+    $('restrictRow').style.display = restricted ? 'flex' : 'none';
+  }
+
+  /* ---------- 流程 ---------- */
+  async function loadDashboard(){
+    try {
+      setStatus('正在同步…', 'ok');
+      const d = await invoke('dashboard');
+      renderDash(d);
+      return d;
+    } catch(e){
+      const msg = String(e);
+      setStatus(msg, 'warn');
+      toast(msg.length > 40 ? msg.slice(0, 40) + '…' : msg);
+      if (msg.indexOf('登录') >= 0) { showView('login'); }
+    }
+  }
+
+  async function doLogin(){
+    const email = $('email').value.trim();
+    const password = $('password').value;
+    const err = $('loginErr');
+    err.classList.remove('show');
+    if (!email || !password){ err.textContent = '请输入邮箱和密码'; err.classList.add('show'); return; }
+    const btn = $('btnLogin');
+    btn.disabled = true; btn.textContent = '登录中…';
+    try {
+      const user = await invoke('login', { email, password });
+      state.loggedIn = true;
+      $('password').value = '';
+      toast('登录成功');
+      await loadDashboard();
+    } catch(e){
+      const msg = String(e);
+      err.textContent = msg;
+      err.classList.add('show');
+      const agree = /agreement|协议|条款|423|503/i.test(msg);
+      $('agreeHint').style.display = agree ? 'block' : 'none';
+    } finally {
+      btn.disabled = false; btn.textContent = '登录并开始同步';
+      syncHeight();
+    }
+  }
+
+  /* ---------- 事件绑定 ---------- */
+  $('btnLogin').addEventListener('click', doLogin);
+  $('password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+  $('email').addEventListener('keydown', e => { if (e.key === 'Enter') $('password').focus(); });
+  $('btnSettings').addEventListener('click', () => {
+    showView(state.view === 'settings' ? (state.loggedIn ? 'dash' : 'login') : 'settings');
+  });
+  $('btnRefresh').addEventListener('click', loadDashboard);
+  $('btnSite').addEventListener('click', () => openInApp(''));
+  $('btnTopup').addEventListener('click', () => openInApp('/purchase'));
+  $('linkManage').addEventListener('click', () => openInApp('/keys'));
+  $('linkRegister').addEventListener('click', () => openInApp('/register'));
+  $('linkService').addEventListener('click', () => openInApp('/legal/terms'));
+  $('setAutostart').addEventListener('click', () => $('setAutostart').classList.toggle('on'));
+  $('setStartHidden').addEventListener('click', () => $('setStartHidden').classList.toggle('on'));
+  $('setTheme').addEventListener('change', () => applyTheme($('setTheme').value));
+
+  $('btnSaveSettings').addEventListener('click', async () => {
+    const settings = {
+      refresh_minutes: parseInt($('setRefresh').value, 10) || 5,
+      autostart: $('setAutostart').classList.contains('on'),
+      alert_threshold: parseFloat($('setThreshold').value) || 0,
+      theme: $('setTheme').value || 'dark',
+      start_hidden: $('setStartHidden').classList.contains('on')
+    };
+    try {
+      const r = await invoke('save_settings', { settings });
+      state.settings = Object.assign({}, settings, {
+        autostart: !!(r && r.autostart),
+        theme: (r && r.theme) || settings.theme,
+        start_hidden: (r && typeof r.start_hidden === 'boolean') ? r.start_hidden : settings.start_hidden
+      });
+      applyTheme(state.settings.theme);
+      renderSettings();
+      toast((r && r.warning) ? String(r.warning) : '设置已保存');
+    } catch(e){ toast(String(e)); }
+  });
+
+  $('btnLogout').addEventListener('click', async () => {
+    try {
+      await invoke('logout');
+      state.loggedIn = false; state.data = null;
+      showView('login');
+      setStatus('未登录', 'off');
+      toast('已退出登录');
+    } catch(e){ toast(String(e)); }
+  });
+
+  $('btnQuit').addEventListener('click', () => invoke('quit_app'));
+  $('btnBackground').addEventListener('click', () => invoke('enter_background').catch(e => toast(String(e))));
+  $('btnOpenData').addEventListener('click', () => invoke('open_data_dir'));
+  $('agreeOpen').addEventListener('click', () => openInApp('/login'));
+
+  // DeepSeek
+  $('dsHd').addEventListener('click', () => {
+    $('dsCard').classList.toggle('collapsed');
+    syncHeight();
+  });
+  $('dsBind').addEventListener('click', () => showView('settings'));
+  $('dsUsage').addEventListener('click', () => {
+    invoke('open_external', { url: 'https://platform.deepseek.com/usage' })
+      .catch(err => toast('打开失败：' + String(err)));
+  });
+  $('dsRefresh').addEventListener('click', async () => {
+    try {
+      const d = await invoke('ds_refresh');
+      dsState = Object.assign({}, dsState, { configured: true, data: d });
+      renderDs();
+      toast('DeepSeek 余额已更新');
+    } catch (e) { toast(String(e)); }
+  });
+
+  $('btnDsSave').addEventListener('click', async () => {
+    const key = $('dsKey').value.trim();
+    if (!key) { toast('请填写 DeepSeek API Key'); return; }
+    try {
+      const r = await invoke('ds_set_key', { key });
+      dsState = r || dsState;
+      $('dsKey').value = '';
+      renderDs();
+      toast('已绑定 DeepSeek');
+      syncHeight();
+    } catch (e) { toast('绑定失败：' + String(e)); }
+  });
+  $('btnDsClear').addEventListener('click', async () => {
+    try {
+      await invoke('ds_clear_key');
+      dsState = { configured: false, tail: '', data: null };
+      renderDs();
+      toast('已解绑 DeepSeek');
+      syncHeight();
+    } catch (e) { toast(String(e)); }
+  });
+
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') invoke('hide_panel');
+  });
+
+  listen('pb://dashboard', (e) => { if (state.loggedIn) renderDash(e.payload); });
+  listen('pb://session', (e) => {
+    state.loggedIn = !!(e.payload && e.payload.loggedIn);
+    if (!state.loggedIn) showView('login');
+  });
+  listen('pb://open-settings', () => showView('settings'));
+  listen('pb://refresh-request', () => { if (state.loggedIn) loadDashboard(); });
+  listen('pb://theme', (e) => applyTheme(e.payload));
+  listen('pb://deepseek', (e) => {
+    if (e.payload) {
+      dsState = Object.assign({}, dsState, { configured: true, data: e.payload });
+    } else {
+      dsState = { configured: false, tail: '', data: null };
+    }
+    renderDs();
+    syncHeight();
+  });
+  listen('pb://panel-shown', () => {
+    if (!state.loggedIn) return;
+    loadDashboard();
+    loadDs();
+  });
+
+  /* ---------- 启动 ---------- */
+  (async function start(){
+    try {
+      const b = await invoke('boot');
+      state.loggedIn = !!b.loggedIn;
+      if (b.settings) { state.settings = b.settings; applyTheme(b.settings.theme || 'dark'); }
+      if (b.version) $('ver').textContent = b.version;
+      restricted = !!b.restricted;
+      loadDs();
+      invoke('data_path').then(p => { $('dataPath').textContent = p; }).catch(() => {});
+      if (b.cache && state.loggedIn) renderDash(b.cache);
+      if (!state.loggedIn) { showView('login'); setStatus('未登录', 'off'); }
+      else if (!b.cache) { loadDashboard(); }
+      else { loadDashboard(); }
+      syncHeight();
+    } catch(e){
+      showView('login');
+      setStatus(String(e), 'warn');
+      syncHeight();
+    }
+  })();
+})();
+</script>
+</body>
+</html>

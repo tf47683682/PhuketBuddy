@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>PhuketBuddy</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 82px; height: 82px; overflow: hidden;
+    background: transparent;
+    font-family: "Segoe UI Variable Display", "Segoe UI", "Microsoft YaHei UI", sans-serif;
+    -webkit-user-select: none; user-select: none;
+    cursor: grab;
+  }
+  body.dragging { cursor: grabbing; }
+
+  :root {
+    --bg1: #17242B;
+    --bg2: #0B1418;
+    --bd: rgba(255,255,255,.16);
+    --fg: #EAF6F5;
+    --fg2: #7FD9D2;
+    --shadow: 0 2px 8px rgba(0,0,0,.45);
+  }
+  body.light {
+    --bg1: #FFFFFF;
+    --bg2: #E9F5F4;
+    --bd: rgba(15,23,42,.16);
+    --fg: #0F172A;
+    --fg2: #0F7C77;
+    --shadow: 0 2px 8px rgba(15,23,42,.18);
+  }
+
+  #bubble {
+    width: 82px; height: 82px;
+    border-radius: 50%;
+    border: 1px solid var(--bd);
+    background: radial-gradient(120% 120% at 32% 24%, var(--bg1), var(--bg2) 78%);
+    box-shadow: var(--shadow);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 2px;
+    padding-bottom: 6px;
+    transition: filter .15s ease, border-color .2s ease;
+  }
+  body:hover #bubble { filter: brightness(1.1); }
+  body.dragging #bubble { filter: brightness(0.95); }
+
+  .bal {
+    font-size: 17px; font-weight: 700; line-height: 1;
+    letter-spacing: -.3px; color: var(--fg);
+    font-variant-numeric: tabular-nums;
+    max-width: 66px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    text-align: center;
+  }
+  .bal.small { font-size: 12px; letter-spacing: 0; }
+  .spent {
+    font-size: 8.5px; line-height: 1.1; color: var(--fg2);
+    font-variant-numeric: tabular-nums;
+    max-width: 68px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    text-align: center;
+  }
+
+  body.low #bubble { border-color: rgba(245,165,36,.8); }
+  body.low .bal { color: #FFD79A; }
+  body.low .spent { color: #F5A524; }
+  body.light.low .bal { color: #B45309; }
+  body.light.low .spent { color: #B45309; }
+
+  body.offline #bubble { border-color: rgba(100,116,139,.55); }
+</style>
+</head>
+<body>
+  <div id="bubble">
+    <div class="bal" id="bal">登录</div>
+    <div class="spent" id="spent">点击查看</div>
+  </div>
+
+<script>
+(function () {
+  const TAURI = window.__TAURI__;
+  const invoke = (cmd, args) => TAURI.core.invoke(cmd, args);
+  const listen = (ev, cb) => TAURI.event.listen(ev, cb);
+  const $bal = document.getElementById('bal');
+  const $spent = document.getElementById('spent');
+
+  let balance = null;
+  let spentToday = null;
+  let logged = false;
+  let threshold = 1.0;
+  let source = 'phuket';
+  let ds = null;
+
+  function fmt(n) {
+    if (n === null || n === undefined || isNaN(n)) return '—';
+    const v = Number(n);
+    if (Math.abs(v) >= 1000) return v.toFixed(0);
+    return v.toFixed(2);
+  }
+  function moneySym(cur) { return cur === 'CNY' ? '¥' : (cur === 'USD' ? '$' : ''); }
+  function setBal(text) {
+    $bal.textContent = text;
+    $bal.classList.toggle('small', String(text).length > 5);
+  }
+
+  function render() {
+    if (source === 'deepseek') {
+      const d = (ds && ds.data) || null;
+      if (!ds || !ds.configured) {
+        setBal('未绑定');
+        $spent.textContent = '右键切换';
+        document.body.classList.remove('low');
+        return;
+      }
+      const cur = (d && d.currency) || 'CNY';
+      setBal(d && typeof d.total === 'number' ? moneySym(cur) + d.total.toFixed(2) : '—');
+      $spent.textContent = 'DeepSeek';
+      document.body.classList.remove('low');
+      return;
+    }
+    if (!logged) {
+      setBal('登录');
+      $spent.textContent = '点击查看';
+      document.body.classList.remove('low');
+      return;
+    }
+    setBal(fmt(balance));
+    $spent.textContent = '已消费 ' + fmt(spentToday);
+    const low = (balance !== null && threshold > 0 && balance < threshold);
+    document.body.classList.toggle('low', low);
+  }
+
+  function applyTheme(theme) {
+    document.body.classList.toggle('light', theme === 'light');
+  }
+  function applyDashboard(d) {
+    if (!d) return;
+    logged = true;
+    const bal = (typeof d.balance === 'number') ? d.balance
+              : (d.user && typeof d.user.balance === 'number') ? d.user.balance : null;
+    if (bal !== null) balance = bal;
+    if (d.stats && typeof d.stats.todayCost === 'number') spentToday = d.stats.todayCost;
+    document.body.classList.remove('offline');
+    render();
+  }
+  function applySession(p) {
+    logged = !!(p && p.loggedIn);
+    if (logged && p.user && typeof p.user.balance === 'number') balance = p.user.balance;
+    if (!logged) { balance = null; spentToday = null; }
+    render();
+  }
+
+  async function start() {
+    try {
+      const b = await invoke('boot');
+      if (b.settings) {
+        if (typeof b.settings.alert_threshold === 'number') threshold = b.settings.alert_threshold;
+        applyTheme(b.settings.theme || 'dark');
+        if (b.settings.bubble_source) source = b.settings.bubble_source;
+      }
+      if (b.deepseek) ds = b.deepseek;
+      logged = !!b.loggedIn;
+      if (b.cache) applyDashboard(b.cache);
+      if (b.loggedIn && b.user && typeof b.user.balance === 'number') { balance = b.user.balance; }
+      render();
+    } catch (e) {
+      console.error(e);
+      document.body.classList.add('offline');
+    }
+  }
+
+  listen('pb://session', (e) => applySession(e.payload));
+  listen('pb://dashboard', (e) => applyDashboard(e.payload));
+  listen('pb://theme', (e) => applyTheme(e.payload));
+  listen('pb://source', (e) => { source = e.payload || 'phuket'; render(); });
+  listen('pb://deepseek', (e) => {
+    if (e.payload) ds = { configured: true, tail: (ds && ds.tail) || '', data: e.payload };
+    else ds = { configured: false, tail: '', data: null };
+    render();
+  });
+  listen('pb://drag-end', (e) => {
+    document.body.classList.remove('dragging');
+    if (e.payload && e.payload.moved === false) {
+      invoke('toggle_panel').catch(console.error);
+    }
+  });
+
+  // 悬停：贴边半隐藏时自动滑出
+  document.addEventListener('pointerenter', () => invoke('bubble_hover', { inside: true }).catch(() => {}));
+  document.addEventListener('pointerleave', () => invoke('bubble_hover', { inside: false }).catch(() => {}));
+
+  document.addEventListener('pointerdown', async (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    document.body.classList.add('dragging');
+    try { await invoke('bubble_down'); } catch (err) { console.error(err); }
+  });
+
+  document.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    invoke('show_bubble_menu').catch(console.error);
+  });
+  document.addEventListener('dragstart', (e) => e.preventDefault());
+  window.addEventListener('blur', () => document.body.classList.remove('dragging'));
+
+  start();
+})();
+</script>
+</body>
+</html>
